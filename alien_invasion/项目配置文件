@@ -1,0 +1,10 @@
+清华镜像源：https://pypi.tuna.tsinghua.edu.cn/simple
+python==3.7.2
+pip==18.1
+pygame==2.6.1
+
+备注：
+全屏模式（已注释）
+
+缺陷：
+键盘操作快捷键【退出】仅支持英文
