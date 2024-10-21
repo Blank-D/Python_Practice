@@ -1,9 +1,10 @@
 import pygame
+from pygame.sprite import Sprite
 
-
-class Bullet:
+class Bullet(Sprite):
     """管理飞船所发射子弹的类"""
 
+    #继承了Sprite,使用精灵sprite，可将游戏元素编组，进而同时操作编组中的所有元素
     def __init__(self, ai_game):
         """在飞船当前位置创建一个子弹对象"""
 
@@ -12,7 +13,8 @@ class Bullet:
         self.settings = ai_game.settings
         self.color = self.settings.bullet_color
 
-        # 在(0,0)处创建一个表示子弹的矩形，再设置正确的位置
+        # 在(0,0)处创建一个表示子弹的矩形，再设置正确的位置，该子弹并非图像，
+        # 所以使用pygame.Rect()类从头开始创建矩形，提供一个左上角坐标、宽、高,三个值
         self.rect = pygame.Rect(0, 0, self.settings.bullet_width,
                                 self.settings.screen_height)
         self.rect.midtop = ai_game.ship.rect.midtop
@@ -20,7 +22,7 @@ class Bullet:
         # 存储用小数表示的子弹位置
         self.y = float(self.rect.y)
 
-    def updat(self):
+    def update(self):
         """向上移动子弹"""
 
         # 更新表示子弹位置的小数值
