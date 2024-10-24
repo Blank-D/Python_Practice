@@ -16,7 +16,7 @@ class Bullet(Sprite):
         # 在(0,0)处创建一个表示子弹的矩形，再设置正确的位置，该子弹并非图像，
         # 所以使用pygame.Rect()类从头开始创建矩形，提供一个左上角坐标、宽、高,三个值
         self.rect = pygame.Rect(0, 0, self.settings.bullet_width,
-                                self.settings.screen_height)
+                                self.settings.bullet_height)
         self.rect.midtop = ai_game.ship.rect.midtop
 
         # 存储用小数表示的子弹位置
