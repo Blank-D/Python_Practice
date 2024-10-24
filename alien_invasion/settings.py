@@ -20,3 +20,6 @@ class Settings:
         self.bullet_color = (60, 60, 60)
         self.bullets_allowed= 3
 
+        # 判断一行可以容纳多少个外星人
+        # available_space_x = self.screen_width  - (2* alien_width)
+

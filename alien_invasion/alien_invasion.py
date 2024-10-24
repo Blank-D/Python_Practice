@@ -3,6 +3,7 @@ import sys
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
+from alien import Alien
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -23,6 +24,10 @@ class AlienInvasion:
         self.ship = Ship(self)
         # 创建一个编组，存储所有有效的子弹：pygame.sprite.Group类似列表，主功能：绘制子弹以及更新每颗子弹的位置
         self.bullets = pygame.sprite.Group()
+
+        # 创建外星人
+        self.aliens = pygame.sprite.Group()
+        self._create_fleet()
 
         # 设置背景色(已在settings实现该功能)
         # self.bg_color = self.settings.bg_color
@@ -83,6 +88,8 @@ class AlienInvasion:
         # sprites返回一个列表
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
+        # 更新外星人的位置，将编组每个元素进行绘制，参数指定了要将编组中的元素绘制到哪个surface上
+        self.aliens.draw(self.screen)
 
     def _fire_bullet(self):
         """创建一颗子弹，并将其加入编组bullets中"""
@@ -103,6 +110,46 @@ class AlienInvasion:
         for bullet in self.bullets.copy():
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
+
+    def _create_fleet(self):
+        """创建外星人群"""
+        # 创建一个外星人并计算一行可容纳多少个外星人
+        # 外星人的间距为外星人宽度
+        alien = Alien(self)
+        alien_width, alien_height = alien.rect.size     # size属性返回一个元组
+        available_space_x = self.settings.screen_width - (2 * alien_width)
+        number_alien_x = available_space_x // (2 * alien_width)
+
+        # 计算屏幕可容纳多少行外星人
+        ship_height = self.ship.rect.height
+        available_space_y = (self.settings.screen_height -
+                             (3 * alien_height) - ship_height)
+        number_rows = available_space_y // (2 * alien_height)
+
+        for row_number in range(number_rows):
+            for alien_number in range(number_alien_x):
+                self._create_alien(alien_number, row_number)
+
+        # 创建第一行外星人(教材)
+        # for alien_number in range(number_alien_x):
+        #     # 创建一个外星人并将其加入当前行
+        #     self._create_alien(alien_number)
+
+        # 按照中心点可以放多个(DIY)
+        # px_alien_center_x = self.settings.screen_width // (number_alien_x + 1)
+        # for alien_number in range(number_alien_x):
+        #     alien = Alien(self)
+        #     alien.rect.centerx = px_alien_center_x + px_alien_center_x * alien_number
+        #     self.aliens.add(alien)
+
+    def _create_alien(self, alien_number, row_number):
+        """创建一个外星人并将其放在当前行"""
+        alien = Alien(self)
+        alien_width, alien_height = alien.rect.size
+        alien.x = alien_width + 2 * alien_width * alien_number
+        alien.rect.x = alien.x
+        alien.rect.y = alien_height + 2 * alien_height * row_number
+        self.aliens.add(alien)
 
 if __name__ == '__main__':
     # 创建游戏实例并运行游戏
