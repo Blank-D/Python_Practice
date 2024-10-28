@@ -8,6 +8,8 @@ from ship import Ship
 from bullet import Bullet
 from alien import Alien
 from game_stats import GameStats
+from button import Button
+from scoreboard import Scoreboard
 
 class AlienInvasion:
     """管理游戏资源和行为的类"""
@@ -25,6 +27,12 @@ class AlienInvasion:
         self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
         pygame.display.set_caption('Alien Invasion')
 
+        # 创建存储游戏统计信息的实例
+        # 并创建记分牌
+        # 创建一个用于存储游戏统计信息的实例
+        self.stats = GameStats(self)
+        self.sb = Scoreboard(self)
+
         self.ship = Ship(self)
         # 创建一个编组，存储所有有效的子弹：pygame.sprite.Group类似列表，主功能：绘制子弹以及更新每颗子弹的位置
         self.bullets = pygame.sprite.Group()
@@ -36,8 +44,9 @@ class AlienInvasion:
         # 设置背景色(已在settings实现该功能)
         # self.bg_color = self.settings.bg_color
 
-        # 创建一个用于存储游戏统计信息的实例
-        self.stats = GameStats(self)
+
+        # 创建Play按钮
+        self.play_button = Button(self, 'Play')
 
 
     def run_game(self):
@@ -65,6 +74,36 @@ class AlienInvasion:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP: #769
                 self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # get_pos返回一个元组，包含玩家单机鼠标的x,y坐标
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_play_button(mouse_pos)
+
+    def _check_play_button(self, mouse_pos):
+        """在玩家单机Play按钮时开始新游戏"""
+        button_clicked = self.play_button.rect.collidepoint(mouse_pos)
+        # 修复缺陷，按钮不可见时，点该play位置也有效
+        if button_clicked and not self.stats.game_active:
+            # 重置游戏设置
+            self.settings.initialize_dynamic_settings()
+            # 重置游戏统计信息
+            self.stats.reset_stats()
+            self.stats.game_active = True
+            self.sb.prep_score()
+            self.sb.prep_level()
+            self.sb.prep_ships()
+
+            # 清空余下的外星人和子弹
+            self.aliens.empty()
+            self.bullets.empty()
+
+            # 创建一群外星人并让飞船居中
+            self._create_fleet()
+            self.ship.center_ship()
+
+            # 隐藏鼠标光标
+            pygame.mouse.set_visible(False)
+
 
 
     def _check_keydown_events(self,event):
@@ -99,6 +138,13 @@ class AlienInvasion:
         # 更新外星人的位置，将编组每个元素进行绘制，参数指定了要将编组中的元素绘制到哪个surface上
         self.aliens.draw(self.screen)
 
+        # 显示得分
+        self.sb.show_score()
+
+        # 如果游戏中处于非活动状态，就绘制Play按钮
+        if not self.stats.game_active:
+            self.play_button.draw_button()
+
     def _fire_bullet(self):
         """创建一颗子弹，并将其加入编组bullets中"""
 
@@ -129,13 +175,26 @@ class AlienInvasion:
             self.bullets, self.aliens, True, True
         )
 
+        if collisions:
+            for aliens in collisions.values():
+                # 单个子弹击中多个外星人，collisions返回一个列表*分数
+                self.stats.score += self.settings.alien_points * len(aliens)
+                # self.stats.score += self.settings.alien_points
+                self.sb.prep_score()
+                self.sb.check_high_score()
+
         # 判断外星人是否被击杀完
         if not self.aliens:
             # 删除现有的子弹并新建一群外星人,empty删除编组下的所有精灵
             self.bullets.empty()
             self._create_fleet()
-            self.settings.bullet_speed += 1
-            self.settings.fleet_drop_speed += 5
+            self.settings.increase_speed()
+            # self.settings.bullet_speed += 1
+            # self.settings.fleet_drop_speed += 5
+
+            # 提高等级
+            self.stats.level += 1
+            self.sb.prep_level()
 
 
     def _create_fleet(self):
@@ -210,6 +269,7 @@ class AlienInvasion:
         if self.stats.ships_left > 0:
             # 将ships_left减1
             self.stats.ships_left -= 1
+            self.sb.prep_ships()
 
             # 清空余下的外星人和子弹
             self.aliens.empty()
@@ -223,6 +283,7 @@ class AlienInvasion:
             sleep(0.5)
         else:
             self.stats.game_active = False
+            pygame.mouse.set_visible(True)
 
     def _check_aliens_bottom(self):
         """检查是否有外星人到达了屏幕底部"""
